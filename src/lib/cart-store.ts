@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { EMPTY_CHECKOUT, type CheckoutDetails } from "./checkout";
 import { PRODUCT_BY_ID } from "./products";
+import { defaultAddQty, lineTotal, normalizeQty, stepFor } from "./quantity";
 
 type CartState = {
   items: Record<string, number>;
@@ -48,29 +49,47 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
       hydrated: false,
       add: (id) =>
-        set((s) => ({
-          items: { ...(s.items ?? {}), [id]: (s.items?.[id] ?? 0) + 1 },
-        })),
+        set((s) => {
+          const product = PRODUCT_BY_ID[id];
+          if (!product) return s;
+          const current = s.items?.[id] ?? 0;
+          const nextQty =
+            current <= 0
+              ? defaultAddQty(product.unit)
+              : normalizeQty(current + stepFor(product.unit), product.unit);
+          const items = { ...(s.items ?? {}) };
+          if (nextQty <= 0) delete items[id];
+          else items[id] = nextQty;
+          return { items };
+        }),
       dec: (id) =>
         set((s) => {
-          const next = { ...(s.items ?? {}) };
-          const qty = (next[id] ?? 0) - 1;
-          if (qty <= 0) delete next[id];
-          else next[id] = qty;
-          return { items: next };
+          const product = PRODUCT_BY_ID[id];
+          if (!product) return s;
+          const items = { ...(s.items ?? {}) };
+          const nextQty = normalizeQty(
+            (items[id] ?? 0) - stepFor(product.unit),
+            product.unit,
+          );
+          if (nextQty <= 0) delete items[id];
+          else items[id] = nextQty;
+          return { items };
         }),
       setQty: (id, qty) =>
         set((s) => {
-          const next = { ...(s.items ?? {}) };
-          if (qty <= 0) delete next[id];
-          else next[id] = qty;
-          return { items: next };
+          const product = PRODUCT_BY_ID[id];
+          if (!product) return s;
+          const items = { ...(s.items ?? {}) };
+          const nextQty = normalizeQty(qty, product.unit);
+          if (nextQty <= 0) delete items[id];
+          else items[id] = nextQty;
+          return { items };
         }),
       remove: (id) =>
         set((s) => {
-          const next = { ...(s.items ?? {}) };
-          delete next[id];
-          return { items: next };
+          const items = { ...(s.items ?? {}) };
+          delete items[id];
+          return { items };
         }),
       clear: () => set({ items: {} }),
       setCheckout: (patch) =>
@@ -117,7 +136,9 @@ export const useCartStore = create<CartState>()(
 );
 
 export function useCartCount() {
-  return useCartStore((s) => Object.values(s.items ?? {}).reduce((a, b) => a + b, 0));
+  return useCartStore(
+    (s) => Object.values(s.items ?? {}).filter((qty) => qty > 0).length,
+  );
 }
 
 export function useCartTotal() {
@@ -125,7 +146,7 @@ export function useCartTotal() {
     Object.entries(s.items ?? {}).reduce((sum, [id, qty]) => {
       const product = PRODUCT_BY_ID[id];
       if (!product) return sum;
-      return sum + product.price * qty;
+      return sum + lineTotal(product.price, qty);
     }, 0),
   );
 }
@@ -134,6 +155,6 @@ export function getLineItems(items: Record<string, number> | undefined) {
   return Object.entries(items ?? {}).flatMap(([id, qty]) => {
     const product = PRODUCT_BY_ID[id];
     if (!product) return [];
-    return [{ product, qty, lineTotal: product.price * qty }];
+    return [{ product, qty, lineTotal: lineTotal(product.price, qty) }];
   });
 }

@@ -28,11 +28,31 @@ export const CART_BOOT_SCRIPT = `(function(){
   function save(next){
     localStorage.setItem(KEY, JSON.stringify({ state: { items: next, checkout: checkout() }, version: 0 }));
   }
-  function money(n){ return "$" + Number(n).toLocaleString("es-AR"); }
+  function money(n){ return "$" + Math.round(Number(n)).toLocaleString("es-AR"); }
   function countOf(it){
     var n = 0;
-    for (var k in it) n += Number(it[k] || 0);
+    for (var k in it) if (Number(it[k] || 0) > 0) n += 1;
     return n;
+  }
+  function fmtQty(qty, unit){
+    if (unit === "kg") {
+      var g = Math.round(qty * 1000);
+      if (g % 1000 === 0) return (g / 1000) + " kg";
+      if (g >= 1000) return String(g / 1000).replace(".", ",") + " kg";
+      return g + " g";
+    }
+    return qty + " " + unit;
+  }
+  function stepFor(unit){ return unit === "kg" ? 0.1 : 1; }
+  function firstQty(unit){ return unit === "kg" ? 0.5 : 1; }
+  function roundQty(qty, unit){
+    if (qty <= 0) return 0;
+    if (unit === "kg") {
+      var g = Math.round(qty * 1000);
+      return g < 50 ? 0 : g / 1000;
+    }
+    var n = Math.round(qty);
+    return n < 1 ? 0 : n;
   }
 
   function toast(msg){
@@ -85,9 +105,9 @@ export const CART_BOOT_SCRIPT = `(function(){
       var meta = CATALOG[id];
       if (!meta) continue;
       var qty = Number(it[id]);
-      var line = qty * meta[1];
+      var line = Math.round(qty * meta[1]);
       total += line;
-      html += '<li style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.75rem 0;border-bottom:1px solid rgba(21,36,24,.08)"><div style="min-width:0;flex:1"><p style="margin:0;font:600 1.05rem Oswald,sans-serif;text-transform:uppercase">'+meta[0]+'</p><p style="margin:.15rem 0 0;font-size:.75rem;color:#5c6b5e">'+qty+' '+meta[2]+' · '+money(meta[1])+'</p></div><div style="display:flex;align-items:center;gap:.25rem;flex-shrink:0"><button type="button" data-dec="'+id+'" style="width:44px;height:44px;border:1px solid rgba(28,90,48,.2);border-radius:999px;background:#fffdf7;color:#1c5a30;font-size:1.2rem;cursor:pointer">−</button><span style="min-width:1.5rem;text-align:center;font:600 1rem Oswald,sans-serif">'+qty+'</span><button type="button" data-add="'+id+'" style="width:44px;height:44px;border:1px solid rgba(28,90,48,.2);border-radius:999px;background:#fffdf7;color:#1c5a30;font-size:1.2rem;cursor:pointer">+</button></div></li>';
+      html += '<li style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.75rem 0;border-bottom:1px solid rgba(21,36,24,.08)"><div style="min-width:0;flex:1"><p style="margin:0;font:600 1.05rem Oswald,sans-serif;text-transform:uppercase">'+meta[0]+'</p><p style="margin:.15rem 0 0;font-size:.75rem;color:#5c6b5e">'+fmtQty(qty, meta[2])+' · '+money(meta[1])+'</p></div><div style="display:flex;align-items:center;gap:.25rem;flex-shrink:0"><button type="button" data-dec="'+id+'" style="width:44px;height:44px;border:1px solid rgba(28,90,48,.2);border-radius:999px;background:#fffdf7;color:#1c5a30;font-size:1.2rem;cursor:pointer">−</button><span style="min-width:1.5rem;text-align:center;font:600 1rem Oswald,sans-serif">'+fmtQty(qty, meta[2])+'</span><button type="button" data-add="'+id+'" style="width:44px;height:44px;border:1px solid rgba(28,90,48,.2);border-radius:999px;background:#fffdf7;color:#1c5a30;font-size:1.2rem;cursor:pointer">+</button></div></li>';
     }
     html += '</ul><div style="padding:1rem 1.25rem 1.25rem;border-top:1px solid rgba(21,36,24,.08);background:#fffdf7"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:.9rem;color:#5c6b5e">Total</span><span style="font:600 1.75rem Oswald,sans-serif">'+money(total)+'</span></div><a data-whatsapp="1" href="#" style="display:flex;margin-top:.75rem;height:48px;align-items:center;justify-content:center;border-radius:999px;background:#1c5a30;color:#fffdf7;text-decoration:none;font-weight:500">Pedir por WhatsApp</a></div>';
     mount.innerHTML = html;
@@ -128,9 +148,9 @@ export const CART_BOOT_SCRIPT = `(function(){
       var meta = CATALOG[id];
       if (!meta) continue;
       var qty = Number(it[id]);
-      var line = qty * meta[1];
+      var line = Math.round(qty * meta[1]);
       total += line;
-      lines.push("• " + qty + " " + meta[2] + " " + meta[0] + " — " + money(line));
+      lines.push("• " + fmtQty(qty, meta[2]) + " " + meta[0] + " — " + money(line));
     }
     var details = ["Nombre: " + (ch.name||""), "Dirección: " + (ch.address||"")];
     if (ch.neighborhood) details.push("Barrio: " + ch.neighborhood);
@@ -158,11 +178,14 @@ export const CART_BOOT_SCRIPT = `(function(){
     var id = (add && add.getAttribute("data-add")) || (dec && dec.getAttribute("data-dec"));
     if (!id) return;
     var it = items();
+    var meta = CATALOG[id] || ["", 0, "unidad"];
+    var unit = meta[2];
     var qty = Number(it[id] || 0);
-    qty = add ? qty + 1 : Math.max(0, qty - 1);
+    if (add) qty = qty <= 0 ? firstQty(unit) : qty + stepFor(unit);
+    else qty = qty - stepFor(unit);
+    qty = roundQty(qty, unit);
     setQty(id, qty);
-    var meta = CATALOG[id];
-    if (add && meta) toast(meta[0] + " sumado al pedido");
+    if (add && meta[0]) toast(meta[0] + " " + fmtQty(qty, unit) + " sumado al pedido");
   }, true);
 
   badge(countOf(items()));

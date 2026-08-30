@@ -149,10 +149,12 @@ export function CartDrawer() {
                       <div className="mt-2 flex items-center justify-between gap-3">
                         <QuantityStepper
                           compact
-                          className="shrink-0"
+                          className="min-w-0 flex-1"
+                          unit={product.unit}
                           value={qty}
                           onDec={() => dec(product.id)}
                           onInc={() => add(product.id)}
+                          onChange={(next) => useCartStore.getState().setQty(product.id, next)}
                         />
                         <p className="shrink-0 font-display text-lg font-semibold tabular-nums text-leaf">
                           {formatPrice(lineTotal)}

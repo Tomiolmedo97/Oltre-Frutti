@@ -2,8 +2,9 @@ import { memo } from "react";
 import { Plus } from "lucide-react";
 import { QuantityStepper } from "@/components/quantity-stepper";
 import { useCartStore } from "@/lib/cart-store";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatQty } from "@/lib/format";
 import { UNIT_LABEL, productImage, type Product } from "@/lib/products";
+import { isWeightUnit, lineTotal } from "@/lib/quantity";
 import { cn } from "@/lib/utils";
 
 type ProductCardProps = {
@@ -19,6 +20,8 @@ export const ProductCard = memo(function ProductCard({
 }: ProductCardProps) {
   const liveQty = useCartStore((s) => s.items?.[product.id] ?? 0);
   const qty = ready ? liveQty : 0;
+  const weight = isWeightUnit(product.unit);
+  const total = qty > 0 ? lineTotal(product.price, qty) : product.price;
 
   return (
     <article
@@ -59,9 +62,13 @@ export const ProductCard = memo(function ProductCard({
           <h3 className="font-display text-xl font-semibold uppercase tracking-tight text-ink">
             {product.name}
           </h3>
-          <p className="mt-0.5 text-sm text-ink-muted">{UNIT_LABEL[product.unit].per}</p>
+          <p className="mt-0.5 text-sm text-ink-muted">
+            {qty > 0 && weight
+              ? `${formatQty(qty, product.unit)} · ${formatPrice(product.price)} el kg`
+              : UNIT_LABEL[product.unit].per}
+          </p>
           <p className="mt-2 font-display text-2xl font-semibold tabular-nums text-leaf">
-            {formatPrice(product.price)}
+            {formatPrice(total)}
           </p>
         </div>
 
@@ -78,9 +85,11 @@ export const ProductCard = memo(function ProductCard({
         ) : (
           <QuantityStepper
             className="w-full"
+            unit={product.unit}
             value={qty}
             onDec={() => useCartStore.getState().dec(product.id)}
             onInc={() => useCartStore.getState().add(product.id)}
+            onChange={(next) => useCartStore.getState().setQty(product.id, next)}
           />
         )}
       </div>
