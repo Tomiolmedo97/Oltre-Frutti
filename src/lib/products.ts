@@ -34,7 +34,7 @@ export const PRODUCTS: Product[] = [
   { id: "palta", name: "Palta", unit: "kg", price: 12000, category: "frutas" },
   { id: "rucula", name: "Rúcula", unit: "unidad", price: 800, category: "verduras" },
   { id: "tomate", name: "Tomate", unit: "kg", price: 3500, category: "verduras" },
-  { id: "tomate-cherry", name: "Tomate cherry", unit: "kg", price: 6000, category: "verduras" },
+  { id: "tomate-cherry", name: "Tomate cherry", unit: "kg", price: 7000, category: "verduras" },
   { id: "albahaca", name: "Albahaca", unit: "unidad", price: 2000, category: "hierbas" },
   { id: "champinon", name: "Champiñón", unit: "paquete", price: 5500, category: "verduras" },
   { id: "manzana-verde", name: "Manzana verde", unit: "kg", price: 3500, category: "frutas" },
