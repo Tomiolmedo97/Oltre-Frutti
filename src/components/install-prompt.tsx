@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { useCartCount, useCartStore } from "@/lib/cart-store";
 import {
   ANDROID_INSTALL_STEPS,
-  INSTALL_DISMISS_KEY,
+  INSTALL_SNOOZE_MS,
   IOS_INSTALL_STEPS,
   isAndroidDevice,
-  isStandaloneApp,
+  markAppInstalled,
+  readInstallDismissed,
+  snoozeInstallPrompt,
 } from "@/lib/install";
 import { useIsClient } from "@/lib/use-is-client";
 
@@ -28,35 +30,46 @@ export function InstallPrompt() {
 
   useEffect(() => {
     if (!isClient) return;
-    try {
-      setDismissed(window.localStorage.getItem(INSTALL_DISMISS_KEY) === "1");
-    } catch {
-      setDismissed(false);
-    }
+    const state = readInstallDismissed();
+    setDismissed(state.hidden);
     setAndroid(isAndroidDevice());
-    if (isStandaloneApp()) setDismissed(true);
+
+    let timer: number | undefined;
+    if (state.hidden && state.remainingMs > 0) {
+      timer = window.setTimeout(() => setDismissed(false), state.remainingMs);
+    }
 
     const onPrompt = (event: Event) => {
       event.preventDefault();
       setDeferred(event as BeforeInstallPromptEvent);
     };
     window.addEventListener("beforeinstallprompt", onPrompt);
-    const onInstalled = () => dismiss();
+    const onInstalled = () => {
+      try {
+        markAppInstalled();
+      } catch {
+        /* ignore */
+      }
+      setDismissed(true);
+      setGuideOpen(false);
+    };
     window.addEventListener("appinstalled", onInstalled);
     return () => {
+      if (timer) window.clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", onPrompt);
       window.removeEventListener("appinstalled", onInstalled);
     };
   }, [isClient]);
 
-  function dismiss() {
+  function snooze() {
     setDismissed(true);
     setGuideOpen(false);
     try {
-      window.localStorage.setItem(INSTALL_DISMISS_KEY, "1");
+      snoozeInstallPrompt();
     } catch {
       /* ignore */
     }
+    window.setTimeout(() => setDismissed(false), INSTALL_SNOOZE_MS);
   }
 
   async function handleInstall() {
@@ -65,7 +78,13 @@ export function InstallPrompt() {
       const choice = await deferred.userChoice;
       setDeferred(null);
       if (choice.outcome === "accepted") {
-        dismiss();
+        try {
+          markAppInstalled();
+        } catch {
+          /* ignore */
+        }
+        setDismissed(true);
+        setGuideOpen(false);
         return;
       }
     }
@@ -98,7 +117,7 @@ export function InstallPrompt() {
             </Button>
             <button
               type="button"
-              onClick={dismiss}
+              onClick={snooze}
               className="grid size-8 shrink-0 place-items-center rounded-full text-ink-muted hover:bg-ink/8 hover:text-ink"
               aria-label="Cerrar aviso de instalación"
             >
