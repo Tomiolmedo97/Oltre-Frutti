@@ -20,6 +20,8 @@ export const Route = createRootRoute({
           "Frutas y verduras frescas a domicilio. Armá tu pedido online y envialo por WhatsApp.",
       },
       { name: "theme-color", content: "#f4c400" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: APP_NAME },
       { property: "og:title", content: APP_NAME },
       {
         property: "og:description",
