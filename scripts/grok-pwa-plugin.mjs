@@ -16,6 +16,7 @@ import {
   renderInstallPageHtml,
   renderWebManifest,
   snapshotOgIdentity,
+  readOgSite,
 } from "./grok-pwa-shared.mjs";
 
 export const GROK_OG_IDENTITY_ID = "virtual:grok-og-identity";
@@ -30,7 +31,11 @@ function requestHost(req) {
 
 export function renderInstallPage(hostHeader, url = "/") {
   const template = readFileSync(INSTALL_PAGE_PATH, "utf8");
-  return renderInstallPageHtml(template, { host: hostHeader, url });
+  return renderInstallPageHtml(template, {
+    host: hostHeader,
+    url,
+    site: readOgSite(),
+  });
 }
 
 function sendHtml(res, html) {
@@ -53,7 +58,7 @@ function serveGrokPwa(middlewares) {
     }
 
     if (pathOnly === "/__grok/manifest.webmanifest" || pathOnly === "/__grok/manifest.json") {
-      const body = Buffer.from(renderWebManifest(requestHost(req)), "utf8");
+      const body = Buffer.from(renderWebManifest(requestHost(req), readOgSite()), "utf8");
       res.statusCode = 200;
       res.setHeader("content-type", "application/manifest+json; charset=utf-8");
       res.setHeader("cache-control", "no-cache");

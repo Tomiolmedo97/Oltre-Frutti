@@ -461,7 +461,7 @@ test("rejects hosts that are not plain slugs", () => {
 
 test("renders install page markup", () => {
   const html = renderInstallPage("wild-race.grok.me", "/?install=1&platform=ios");
-  assert.match(html, /Add Wild Race to your/);
+  assert.match(html, /Add Oltre Frutti to your/);
   assert.match(html, /\/__grok\/install\/styles\.css/);
   assert.match(html, /href="\/"/);
   assert.equal(html.includes("{{APP_NAME}}"), false);
@@ -478,6 +478,14 @@ test("renders the manifest with the per-app name", () => {
   assert.equal(manifest.name, "Wild Race");
   assert.equal(manifest.short_name, "Wild Race");
   assert.equal(manifest.icons[0].src, "/__grok/icon-180.png");
+});
+
+test("manifest prefers the emprendimiento title over Grok App", () => {
+  const manifest = JSON.parse(
+    renderWebManifest("oltre-frutti.vercel.app", { title: "Oltre Frutti" }),
+  );
+  assert.equal(manifest.name, "Oltre Frutti");
+  assert.equal(manifest.short_name, "Oltre Frutti");
 });
 
 // Tripwires: the deployed-app path only works if Nitro scans server/ — an
