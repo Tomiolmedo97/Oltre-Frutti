@@ -11,7 +11,13 @@ import { SiteHeader } from "@/components/site-header";
 import { loadPricesFromSheet } from "@/lib/sheet-prices";
 
 export const Route = createFileRoute("/")({
-  loader: async () => ({ prices: await loadPricesFromSheet() }),
+  loader: async () => {
+    try {
+      return { prices: await loadPricesFromSheet() };
+    } catch {
+      return { prices: {} as Record<string, number> };
+    }
+  },
   component: Home,
 });
 
