@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { EMPTY_CHECKOUT, type CheckoutDetails } from "./checkout";
 import { PRODUCT_BY_ID } from "./products";
+import { getLivePrice, useLiveProducts, withLivePrice } from "./live-catalog";
 import { defaultAddQty, lineTotal, normalizeQty, stepFor } from "./quantity";
 
 type CartState = {
@@ -142,19 +143,19 @@ export function useCartCount() {
 }
 
 export function useCartTotal() {
-  return useCartStore((s) =>
-    Object.entries(s.items ?? {}).reduce((sum, [id, qty]) => {
-      const product = PRODUCT_BY_ID[id];
-      if (!product) return sum;
-      return sum + lineTotal(product.price, qty);
-    }, 0),
-  );
+  const items = useCartStore((s) => s.items ?? {});
+  useLiveProducts();
+  return Object.entries(items).reduce((sum, [id, qty]) => {
+    if (!PRODUCT_BY_ID[id]) return sum;
+    return sum + lineTotal(getLivePrice(id), qty);
+  }, 0);
 }
 
 export function getLineItems(items: Record<string, number> | undefined) {
   return Object.entries(items ?? {}).flatMap(([id, qty]) => {
     const product = PRODUCT_BY_ID[id];
     if (!product) return [];
-    return [{ product, qty, lineTotal: lineTotal(product.price, qty) }];
+    const live = withLivePrice(product);
+    return [{ product: live, qty, lineTotal: lineTotal(live.price, qty) }];
   });
 }

@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
-import { CATEGORIES, PRODUCTS, type Category } from "@/lib/products";
+import { CATEGORIES, type Category } from "@/lib/products";
+import { useLiveProducts } from "@/lib/live-catalog";
 import { useIsClient } from "@/lib/use-is-client";
 import { cn } from "@/lib/utils";
 
@@ -9,15 +10,16 @@ export function Catalog() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | "todos">("todos");
   const ready = useIsClient();
+  const products = useLiveProducts();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return PRODUCTS.filter((p) => {
+    return products.filter((p) => {
       const matchCat = category === "todos" || p.category === category;
       const matchQ = q.length === 0 || p.name.toLowerCase().includes(q);
       return matchCat && matchQ;
     });
-  }, [query, category]);
+  }, [query, category, products]);
 
   const featured = filtered.find((p) => p.id === "cajon-naranja");
   const rest = filtered.filter((p) => p.id !== "cajon-naranja");

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { EMPTY_CHECKOUT, isCheckoutReady } from "@/lib/checkout";
 import { getLineItems, useCartStore, useCartTotal } from "@/lib/cart-store";
 import { formatPrice, formatQty } from "@/lib/format";
+import { useLiveProducts } from "@/lib/live-catalog";
 import { productImage } from "@/lib/products";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { toast } from "sonner";
@@ -20,7 +21,8 @@ export function CartDrawer() {
   const remove = useCartStore((s) => s.remove);
   const clear = useCartStore((s) => s.clear);
   const total = useCartTotal();
-  const lines = useMemo(() => getLineItems(items), [items]);
+  const catalog = useLiveProducts();
+  const lines = useMemo(() => getLineItems(items), [items, catalog]);
   const [attempted, setAttempted] = useState(false);
 
   useEffect(() => {
