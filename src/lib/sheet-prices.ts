@@ -1,7 +1,7 @@
 import { PRODUCTS } from "./products";
 
 /** Planilla "Oltre Frutti - Precios". Solo se usa la columna Precio. */
-export const PRICES_SHEET_ID = "1_CfYKo7GJzVj0Y9oAJ0_X16tUxay_FPDOpSzDH_D6Xc";
+export const PRICES_SHEET_ID = "1_CfYKo7GJzVj0Y9oAJ0_X16tJxay_FPDOpSzDH_D6Xc";
 
 export function sheetCsvUrl(id = PRICES_SHEET_ID) {
   if (!id) return "";
