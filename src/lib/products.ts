@@ -56,7 +56,6 @@ export const PRODUCTS: Product[] = [
   { id: "zucchini", name: "Zucchini", unit: "kg", price: 5800, category: "verduras" },
   { id: "cabutia", name: "Cabutia", unit: "unidad", price: 3900, category: "verduras" },
   { id: "calabaza", name: "Calabaza", unit: "unidad", price: 3500, category: "verduras" },
-  { id: "mandarina", name: "Mandarina", unit: "kg", price: 2600, category: "frutas" },
   { id: "pepino", name: "Pepino", unit: "kg", price: 3000, category: "verduras" },
   { id: "espinaca", name: "Espinaca", unit: "unidad", price: 3000, category: "verduras" },
 ];
