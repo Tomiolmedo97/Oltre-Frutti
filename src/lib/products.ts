@@ -54,7 +54,7 @@ export const PRODUCTS: Product[] = [
   { id: "pera", name: "Pera", unit: "kg", price: 3000, category: "frutas" },
   { id: "huevo", name: "Huevo maple N1", unit: "maple", price: 7500, category: "otros" },
   { id: "zucchini", name: "Zucchini", unit: "kg", price: 5800, category: "verduras" },
-  { id: "cabutia", name: "Cabutia", unit: "unidad", price: 3900, category: "verduras" },
+  { id: "cabutia", name: "Cabutia", unit: "kg", price: 3900, category: "verduras" },
   { id: "calabaza", name: "Calabaza", unit: "unidad", price: 3500, category: "verduras" },
   { id: "pepino", name: "Pepino", unit: "kg", price: 3000, category: "verduras" },
   { id: "espinaca", name: "Espinaca", unit: "unidad", price: 3000, category: "verduras" },
